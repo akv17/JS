@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+</head>
+<body>
+  
+  <style>
+    .canvas {
+      width: 600px;
+      height: 300px;
+      border: 2px solid black;
+      margin-top: 10px;
+    }
+    
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 4px;
+      background: black;
+      position: absolute
+    }
+  </style>
+
+  <button>Clear</button>
+  
+  <div class="canvas"></div>
+  
+  <script>
+    function buildDotStylingTable(){
+      let existingTable = document.getElementById("dotStylingTable"); 
+      
+      if (existingTable){
+        document.body.removeChild(existingTable);
+      }
+      
+      let table = document.createElement("table");
+      table.id = "dotStylingTable";
+      
+      let headerRow = document.createElement("tr");
+      let headerCell = document.createElement("th");
+      headerCell.appendChild(document.createTextNode("Dot styling"));
+      headerCell.style["text-align"] = "left";
+      headerRow.appendChild(headerCell);
+      table.appendChild(headerRow);
+      
+      for (let prm of Object.keys(dotStyling)){
+        let row = document.createElement("tr");
+        let cell = document.createElement("td");
+        let cellText = document.createTextNode(`${prm}: ${dotStyling[prm]}`);
+        
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+        table.appendChild(row);
+      }
+      document.body.insertBefore(table, document.body.firstChild);
+    }
+    
+    function getCssRulesByClass(cls){
+      return Array.from(document.styleSheets[1].rules).find(x => {if (x.selectorText === "."+cls){return true}});
+    }
+    
+    function traceMouse(event){
+      if (event.buttons == 1){
+        drawDot(event.clientX, event.clientY);
+      }
+      
+      else if (event.buttons == 2){
+        let elementAtPoint = document.elementFromPoint(event.clientX, event.clientY);
+        
+        if (elementAtPoint.className == dotStylingSelector){
+          canvas.removeChild(elementAtPoint);
+        }
+        event.preventDefault();
+      }
+    }
+    
+    function moveDot(x, y){
+      dot.style.left = `${x}px`;
+      dot.style.top = `${y}px`;
+    }
+    
+    function drawDot(x, y){
+      let newDot = document.createElement("div");
+      newDot.className = dotStylingSelector;
+      newDot.id = "dot";
+      
+      newDot.style.left = `${x}px`;
+      newDot.style.top = `${y}px`;
+      
+      canvas.appendChild(newDot);
+    }
+    
+    function undoDrawDot(event){
+      if (event.ctrlKey && event.key == "z"){
+        lastDot = canvas.lastChild;
+        
+        if (lastDot && lastDot.id == "dot"){
+          canvas.removeChild(lastDot);
+        }
+      }
+    }
+    
+    function clearPage(){
+      for (let i=canvas.childNodes.length - 1; i>=0; i--){
+        if (canvas.childNodes[i].id == "dot"){
+          canvas.removeChild(canvas.childNodes[i]);
+        }
+      }
+    }
+    
+    function addNewDotStyling(selector){
+      let newRule = "";
+      for (let rule of Object.keys(dotStyling)){
+        newRule += `${rule}: ${dotStyling[rule]};`;
+      }
+      sheets.addRule(`.${selector}`, newRule);
+    }
+    
+    function changeDotColor(event){
+      if (event.key == "c"){
+        let newColor = prompt("Set new color of the dot:");
+        let newDotStylingSelector = `dot_${newColor}`
+        dotStyling.background = newColor;
+        addNewDotStyling(newDotStylingSelector);
+        dotStylingSelector = newDotStylingSelector;
+        buildDotStylingTable();
+      }
+    }
+    
+    function changeDotSize(event){
+      if (event.key == "v"){
+        let newSize = prompt("Set new size of the dot:");
+        newSize = `${newSize}px`;
+        let newDotStylingSelector = `dot_${newSize}`
+        dotStyling.width = newSize;
+        dotStyling.height = newSize;
+        addNewDotStyling(newDotStylingSelector);
+        dotStylingSelector = newDotStylingSelector;
+        buildDotStylingTable();
+      }
+    }
+    
+    let dotStylingSelector = "dot";
+    let dotStyling = {width: "8px",
+                      height: "8px",
+                      "border-radius": "4px",
+                      background: "black",
+                      position: "absolute"};
+    
+    let sheets = document.styleSheets[0];
+    
+    buildDotStylingTable();
+    
+    let button = document.querySelector("button");
+    button.onclick = clearPage;
+    
+    let canvas = document.querySelector(".canvas");
+    canvas.addEventListener("mousemove", traceMouse);
+    canvas.addEventListener("contextmenu", event => {event.preventDefault();});
+    
+    window.addEventListener("keydown", undoDrawDot);
+    window.addEventListener("keydown", changeDotColor);
+    window.addEventListener("keydown", changeDotSize);
+  
+  </script>
+
+</body>
+</html>
